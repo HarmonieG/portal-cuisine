@@ -199,7 +199,9 @@ function clockTick(){
 /* ---- audio + écran allumé (déverrouillés au premier toucher) ---- */
 let actx=null, wake=null;
 async function lockWake(){ try{ if('wakeLock' in navigator && !wake){ wake=await navigator.wakeLock.request('screen'); wake.addEventListener('release',()=>wake=null);} }catch(e){} }
-addEventListener('pointerdown', ()=>{ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} lockWake(); }, {passive:true});
+let fsTried=false;
+function goFull(){ if(fsTried) return; fsTried=true; const el=document.documentElement; try{ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }catch(e){} }
+addEventListener('pointerdown', ()=>{ goFull(); try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} lockWake(); }, {passive:true});
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) lockWake(); });
 function beep(){
   if(!actx) return;
