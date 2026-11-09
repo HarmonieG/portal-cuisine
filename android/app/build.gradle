@@ -1,0 +1,26 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'fr.harmonie.cuisine'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'fr.harmonie.cuisine'
+        minSdk 28
+        targetSdk 29
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
