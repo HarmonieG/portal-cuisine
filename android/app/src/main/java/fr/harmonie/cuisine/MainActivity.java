@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(GROUND);
         bar.setPadding(dp(48), dp(28), dp(48), dp(28));
-        bar.addView(makePill("‹  Retour", new View.OnClickListener() {
+        bar.addView(makePill("Retour", R.drawable.ic_chevron, new View.OnClickListener() {
             @Override public void onClick(View v) { goBack(); }
         }));
         bar.addView(makePill("Accueil", R.drawable.ic_home, new View.OnClickListener() {
