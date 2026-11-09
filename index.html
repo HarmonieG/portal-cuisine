@@ -271,6 +271,13 @@ setInterval(()=>{ if(lastRing) beep(); },1400);
 /* ---- veille ---- */
 $('#fsBtn').onclick=fsToggle;
 $('#sleepBtn').onclick=()=>$('#sleep').classList.add('on');
+/* Dans l'appli Android : le bouton lune devient « Quitter » et le plein écran est inutile */
+if(window.Android){
+  $('#fsBtn').style.display='none';
+  const q=$('#sleepBtn'); q.setAttribute('aria-label',"Quitter l'application");
+  q.innerHTML='<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16201B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9M17.7 6.6a8.5 8.5 0 1 1-11.4 0"/></svg>';
+  q.onclick=()=>Android.quit();
+}
 $('#sleep').onclick=()=>$('#sleep').classList.remove('on');
 
 loadTimers(); buildList(); tick();

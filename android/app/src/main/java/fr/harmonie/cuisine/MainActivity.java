@@ -2,12 +2,18 @@ package fr.harmonie.cuisine;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -17,21 +23,36 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TextClock;
 
 /**
  * Deux navigateurs superposés :
  *  - "home" : ta page GitHub Pages (accueil, minuteurs). Toujours chargée, donc les minuteurs sonnent même si tu es sur une recette.
- *  - "ext"  : Cookidoo, YouTube Music... avec une barre Retour / Accueil / Recharger toujours visible.
+ *  - "ext"  : Cookidoo, YouTube Music... avec une barre en haut (même style que la page) : Retour / Accueil / Recharger.
  */
 public class MainActivity extends Activity {
 
     static final String HOME_URL = "https://harmonieg.github.io/portal-cuisine/";
     static final String HOME_HOST = "harmonieg.github.io";
 
+    private static final int GROUND = 0xFFEEF1EC;
+    private static final int INK = 0xFF16201B;
+    private static final int MUTE = 0xFF5B665F;
+
     private WebView home;
     private WebView ext;
     private LinearLayout bar;
     private boolean clearExtHistory = false;
+
+    /** Appelé par la page d'accueil (bouton "Quitter"). */
+    public class Bridge {
+        @JavascriptInterface
+        public void quit() {
+            runOnUiThread(new Runnable() {
+                @Override public void run() { finishAndRemoveTask(); }
+            });
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +61,35 @@ public class MainActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(0xFF16201B);
+        root.setBackgroundColor(GROUND);
+
+        // Barre du haut, dans le style de la page (mêmes marges, mêmes boutons blancs arrondis)
+        bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(GROUND);
+        bar.setPadding(dp(48), dp(28), dp(48), dp(28));
+        bar.addView(makePill("‹  Retour", new View.OnClickListener() {
+            @Override public void onClick(View v) { goBack(); }
+        }));
+        bar.addView(makePill("Accueil", new View.OnClickListener() {
+            @Override public void onClick(View v) { showExt(false); }
+        }));
+        bar.addView(makePill("Recharger", new View.OnClickListener() {
+            @Override public void onClick(View v) { ext.reload(); }
+        }));
+        View spacer = new View(this);
+        bar.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
+        TextClock clock = new TextClock(this);
+        clock.setFormat24Hour("HH:mm");
+        clock.setFormat12Hour("HH:mm");
+        clock.setTextSize(40);
+        clock.setTextColor(MUTE);
+        clock.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        bar.addView(clock);
+        bar.setVisibility(View.GONE);
+        root.addView(bar, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         FrameLayout content = new FrameLayout(this);
         root.addView(content, new LinearLayout.LayoutParams(
@@ -48,28 +97,12 @@ public class MainActivity extends Activity {
 
         home = makeWebView(true);
         ext = makeWebView(false);
+        home.addJavascriptInterface(new Bridge(), "Android");
         content.addView(home, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         content.addView(ext, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         ext.setVisibility(View.GONE);
-
-        bar = new LinearLayout(this);
-        bar.setOrientation(LinearLayout.HORIZONTAL);
-        bar.setBackgroundColor(0xFF16201B);
-        bar.setPadding(dp(12), dp(8), dp(12), dp(8));
-        bar.addView(makeButton("‹  Retour", new View.OnClickListener() {
-            @Override public void onClick(View v) { goBack(); }
-        }), buttonParams());
-        bar.addView(makeButton("Accueil", new View.OnClickListener() {
-            @Override public void onClick(View v) { showExt(false); }
-        }), buttonParams());
-        bar.addView(makeButton("Recharger", new View.OnClickListener() {
-            @Override public void onClick(View v) { ext.reload(); }
-        }), buttonParams());
-        bar.setVisibility(View.GONE);
-        root.addView(bar, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(88)));
 
         setContentView(root);
         home.loadUrl(HOME_URL);
@@ -77,7 +110,7 @@ public class MainActivity extends Activity {
 
     private WebView makeWebView(final boolean isHome) {
         WebView wv = new WebView(this);
-        wv.setBackgroundColor(isHome ? 0xFFEEF1EC : Color.WHITE);
+        wv.setBackgroundColor(isHome ? GROUND : Color.WHITE);
         WebSettings s = wv.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -132,21 +165,40 @@ public class MainActivity extends Activity {
         return wv;
     }
 
-    private Button makeButton(String label, View.OnClickListener l) {
+    /** Bouton blanc arrondi, comme le bouton "Accueil" de la page. */
+    private Button makePill(String label, View.OnClickListener l) {
         Button b = new Button(this);
         b.setText(label);
-        b.setTextSize(22);
+        b.setTextSize(26);
         b.setAllCaps(false);
-        b.setTextColor(Color.WHITE);
-        b.setBackgroundColor(0xFF2F3D36);
+        b.setTextColor(INK);
+        b.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        b.setMinWidth(0);
+        b.setMinimumWidth(0);
+        b.setMinHeight(0);
+        b.setMinimumHeight(0);
+        b.setPadding(dp(32), 0, dp(32), 0);
+        b.setStateListAnimator(null);
+        b.setElevation(0);
+
+        StateListDrawable bg = new StateListDrawable();
+        bg.addState(new int[]{android.R.attr.state_pressed}, pillShape(0xFFDDE3DC));
+        bg.addState(new int[]{}, pillShape(Color.WHITE));
+        b.setBackground(bg);
         b.setOnClickListener(l);
+
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(80));
+        p.setMargins(0, 0, dp(16), 0);
+        b.setLayoutParams(p);
         return b;
     }
 
-    private LinearLayout.LayoutParams buttonParams() {
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-        p.setMargins(dp(6), 0, dp(6), 0);
-        return p;
+    private GradientDrawable pillShape(int color) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(color);
+        g.setCornerRadius(dp(40));
+        return g;
     }
 
     private int dp(int v) {
@@ -175,7 +227,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        goBack(); // jamais de sortie de l'appli par erreur
+        goBack(); // jamais de sortie de l'appli par erreur : on quitte avec le bouton de l'accueil
     }
 
     @Override
