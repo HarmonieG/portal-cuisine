@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Cuisine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#EEF1EC;--ink:#16201B;--tomato:#D8452B;--blue:#2D3E7A;--saffron:#E9A81B;--basil:#2F6B4F;--mute:#5B665F}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{height:100%;background:#0d1411;overflow:hidden;font-family:Inter,system-ui,sans-serif;color:var(--ink)}
+button,a{font:inherit;color:inherit;text-decoration:none;border:0;cursor:pointer}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:800px;margin:-400px 0 0 -640px;background:var(--ground);overflow:hidden;transform-origin:center}
+.view{position:absolute;inset:0;padding:40px 48px;display:none;flex-direction:column}
+.view.active{display:flex}
+h1,.big{font-family:'Space Grotesk',Inter,sans-serif}
+/* Accueil */
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.clock{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:96px;line-height:1;font-variant-numeric:tabular-nums}
+.date{font-size:28px;color:var(--mute);margin-top:6px}
+.round{width:88px;height:88px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:24px}
+.tile{border-radius:28px;padding:32px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;color:#fff;position:relative}
+.tile svg{width:64px;height:64px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile .t{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:48px;line-height:1.05}
+.tile .s{font-size:24px;opacity:.85;margin-top:6px}
+.tile:active,.btn:active,.preset:active{transform:scale(.98)}
+.t-red{background:var(--tomato)}.t-blue{background:var(--blue)}.t-yellow{background:var(--saffron);color:#1B1608}
+.t-ghost{background:transparent;border:3px dashed #9AA59D;color:var(--mute)}
+.chip{position:absolute;top:28px;right:28px;background:rgba(255,255,255,.22);padding:8px 16px;border-radius:99px;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+/* Barre du haut des sous-pages */
+.top{display:flex;align-items:center;gap:24px;margin-bottom:28px}
+.back{height:80px;padding:0 32px 0 22px;border-radius:40px;background:#fff;display:flex;align-items:center;gap:10px;font-size:28px;font-weight:600;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.back svg{width:36px;height:36px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.top h1{font-size:56px}
+.top .clock-s{margin-left:auto;font-family:'Space Grotesk';font-weight:700;font-size:44px;font-variant-numeric:tabular-nums;color:var(--mute)}
+/* Minuteurs */
+.tbody{flex:1;display:flex;gap:24px;min-height:0}
+#tlist{flex:1;display:flex;flex-direction:column;gap:20px;overflow:auto}
+.empty{flex:1;display:grid;place-items:center;border:3px dashed #B6BFB8;border-radius:28px;color:var(--mute);font-size:30px;text-align:center;padding:24px}
+.tcard{border-radius:28px;padding:24px 32px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:168px}
+.tcard.run{background:var(--basil);color:#fff}
+.tcard.ring{background:var(--tomato);color:#fff;animation:blink .8s steps(2) infinite}
+@keyframes blink{50%{filter:brightness(1.25)}}
+.tname{font-size:26px;font-weight:600;opacity:.85}
+.tdig{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:112px;line-height:1;font-variant-numeric:tabular-nums}
+.tact{display:flex;gap:12px}
+.btn{min-width:110px;height:84px;padding:0 24px;border-radius:42px;background:rgba(22,32,27,.1);font-size:28px;font-weight:600}
+.run .btn,.ring .btn{background:rgba(255,255,255,.22)}
+.btn.solid{background:var(--ink);color:#fff}
+#panel{width:400px;background:#fff;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:16px}
+#panel h2{font-family:'Space Grotesk';font-size:34px}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.preset{height:92px;border-radius:24px;background:var(--saffron);color:#1B1608;font-family:'Space Grotesk';font-weight:700;font-size:38px}
+.preset small{font-size:22px;font-weight:600}
+.other{height:84px;border-radius:24px;background:#E3E8E2;font-size:28px;font-weight:600}
+.custom{display:none;gap:10px;align-items:center;justify-content:space-between}
+.custom.open{display:flex}
+.custom .val{font-family:'Space Grotesk';font-weight:700;font-size:44px;min-width:110px;text-align:center}
+.custom .btn{min-width:0;width:68px;padding:0;font-size:26px}
+.go{height:84px;border-radius:24px;background:var(--ink);color:#fff;font-size:28px;font-weight:600;display:none}
+.go.open{display:block}
+/* Recettes */
+.rgrid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1.3fr 1fr 1fr;gap:20px;min-height:0}
+.rbtn{border-radius:28px;padding:28px 32px;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:left}
+.rbtn .t{font-family:'Space Grotesk';font-weight:700;font-size:44px}
+.rbtn .s{font-size:24px;color:var(--mute);margin-top:4px}
+.rbtn.main{grid-column:1/3;background:var(--tomato);color:#fff}
+.rbtn.main .s{color:rgba(255,255,255,.85)}
+.note{margin-top:16px;font-size:22px;color:var(--mute)}
+/* Veille */
+#sleep{position:absolute;inset:0;background:#000;display:none;z-index:50;color:#333;align-items:center;justify-content:center;font-family:'Space Grotesk';font-size:40px}
+#sleep.on{display:flex}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- ACCUEIL -->
+  <section class="view active" id="v-home">
+    <div class="head">
+      <div><div class="clock" id="clk">--:--</div><div class="date" id="dt"></div></div>
+      <button class="round" id="sleepBtn" aria-label="Mettre l'écran en veille">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16201B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+    <div class="grid">
+      <button class="tile t-red" data-go="recipes">
+        <svg viewBox="0 0 24 24"><path d="M6 2v8a3 3 0 0 0 3 3v9M9 2v8M12 2v8M16 22V2c-2 1-3 4-3 8s1 4 3 4"/></svg>
+        <div><div class="t">Recettes</div><div class="s">Ouvre Cookidoo</div></div>
+      </button>
+      <button class="tile t-blue" data-go="timers">
+        <span class="chip" id="homeChip" style="display:none"></span>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>
+        <div><div class="t">Minuteurs</div><div class="s">Plusieurs à la fois</div></div>
+      </button>
+      <button class="tile t-yellow" data-open="music">
+        <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <div><div class="t">Musique</div><div class="s">YouTube Music</div></div>
+      </button>
+      <button class="tile t-ghost" data-open="shopping">
+        <svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.5a2 2 0 0 0 2 1.5h7.7a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg>
+        <div><div class="t">Courses</div><div class="s">Ta liste Cookidoo</div></div>
+      </button>
+    </div>
+  </section>
+
+  <!-- MINUTEURS -->
+  <section class="view" id="v-timers">
+    <div class="top">
+      <button class="back" data-back><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Accueil</button>
+      <h1>Minuteurs</h1>
+      <div class="clock-s" data-clock>--:--</div>
+    </div>
+    <div class="tbody">
+      <div id="tlist"></div>
+      <aside id="panel">
+        <h2>Nouveau minuteur</h2>
+        <div class="presets" id="presets"></div>
+        <button class="other" id="otherBtn">Autre durée</button>
+        <div class="custom" id="custom">
+          <button class="btn" data-step="-5">−5</button><button class="btn" data-step="-1">−1</button>
+          <div class="val"><span id="cval">12</span><small style="font-size:22px"> min</small></div>
+          <button class="btn" data-step="1">+1</button><button class="btn" data-step="5">+5</button>
+        </div>
+        <button class="go" id="goBtn">Lancer</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- RECETTES -->
+  <section class="view" id="v-recipes">
+    <div class="top">
+      <button class="back" data-back><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Accueil</button>
+      <h1>Recettes</h1>
+      <div class="clock-s" data-clock>--:--</div>
+    </div>
+    <div class="rgrid" id="rgrid"></div>
+    <div class="note">Pour revenir ici depuis un site : bouton « Retour » du navigateur. Tes minuteurs continuent de tourner.</div>
+  </section>
+
+  <div id="sleep">Touche l'écran pour réveiller</div>
+</div>
+
+<script>
+/* ====== À ADAPTER ====== */
+const LINKS = {
+  cookidoo: 'https://cookidoo.fr/foundation/fr-FR',
+  myrecipes: 'https://cookidoo.fr/organize/fr-FR/my-recipes',
+  planning: 'https://cookidoo.fr/planning/fr-FR/my-week',
+  shopping: 'https://cookidoo.fr/shopping/fr-FR',
+  music: 'https://music.youtube.com/'
+};
+const OTHER_SITES = [ { name: 'Marmiton', sub: 'marmiton.org', url: 'https://www.marmiton.org/' } ];
+const PRESETS = [1,5,10,15,20,30];
+/* ======================= */
+
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,'0');
+
+/* ---- échelle : le décor 1280x800 s'adapte à l'écran ---- */
+function fit(){ const k=Math.min(innerWidth/1280, innerHeight/800); $('#stage').style.transform='scale('+k+')'; }
+addEventListener('resize', fit); fit();
+
+/* ---- navigation avec historique (le bouton Retour du navigateur marche) ---- */
+const VIEWS=['home','timers','recipes'];
+function show(v){ if(!VIEWS.includes(v)) v='home'; VIEWS.forEach(n=>$('#v-'+n).classList.toggle('active',n===v)); }
+function go(v){ show(v); history.pushState({view:v},'','#'+v); }
+function back(){ if(history.state && history.state.view!=='home' && history.length>1) history.back(); else { show('home'); history.replaceState({view:'home'},'','#home'); } }
+addEventListener('popstate', e=>show((e.state&&e.state.view)||location.hash.slice(1)||'home'));
+addEventListener('pageshow', ()=>{ show((history.state&&history.state.view)||location.hash.slice(1)||'home'); loadTimers(); buildList(); });
+history.replaceState({view:(location.hash.slice(1)||'home')},'',location.hash||'#home');
+show(location.hash.slice(1)||'home');
+
+document.addEventListener('click', e=>{
+  const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }
+  if(e.target.closest('[data-back]')){ back(); return; }
+  const o=e.target.closest('[data-open]'); if(o){ location.href=LINKS[o.dataset.open]; return; }
+});
+
+/* ---- recettes ---- */
+(function(){
+  const items=[
+    {cls:'main',t:'Cookidoo',s:'Page d\'accueil, recherche',url:LINKS.cookidoo},
+    {t:'Mes recettes',s:'Tes collections',url:LINKS.myrecipes},
+    {t:'Planning',s:'La semaine',url:LINKS.planning},
+    {t:'Courses',s:'Liste de courses',url:LINKS.shopping}
+  ].concat(OTHER_SITES.map(x=>({t:x.name,s:x.sub,url:x.url})));
+  $('#rgrid').innerHTML=items.map(i=>'<a class="rbtn '+(i.cls||'')+'" href="'+i.url+'"><div class="t">'+i.t+'</div><div class="s">'+i.s+'</div></a>').join('');
+})();
+
+/* ---- horloge ---- */
+function clockTick(){
+  const d=new Date(), t=pad(d.getHours())+':'+pad(d.getMinutes());
+  $('#clk').textContent=t; document.querySelectorAll('[data-clock]').forEach(x=>x.textContent=t);
+  let s=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); $('#dt').textContent=s.charAt(0).toUpperCase()+s.slice(1);
+}
+
+/* ---- audio + écran allumé (déverrouillés au premier toucher) ---- */
+let actx=null, wake=null;
+async function lockWake(){ try{ if('wakeLock' in navigator && !wake){ wake=await navigator.wakeLock.request('screen'); wake.addEventListener('release',()=>wake=null);} }catch(e){} }
+addEventListener('pointerdown', ()=>{ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} lockWake(); }, {passive:true});
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) lockWake(); });
+function beep(){
+  if(!actx) return;
+  [0,0.22,0.44].forEach(d=>{ const o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.value=880; o.connect(g); g.connect(actx.destination);
+    const t=actx.currentTime+d; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.5,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.18); o.start(t); o.stop(t+0.2); });
+}
+
+/* ---- minuteurs (sauvegardés : survivent à un rechargement ou à un aller-retour sur Cookidoo) ---- */
+let timers=[];
+function saveTimers(){ try{ localStorage.setItem('cuisine.timers',JSON.stringify(timers)); }catch(e){} }
+function loadTimers(){ try{ timers=JSON.parse(localStorage.getItem('cuisine.timers')||'[]'); }catch(e){ timers=[]; } }
+const left = t => t.running ? Math.max(0,t.endAt-Date.now()) : t.remaining;
+const isRing = t => t.running && Date.now()>=t.endAt;
+function fmt(ms){ const s=Math.ceil(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return (h?h+':'+pad(m):pad(m))+':'+pad(s%60); }
+function addTimer(min){ timers.push({id:Date.now()+Math.random(),label:min+' min',total:min*60000,remaining:min*60000,running:true,endAt:Date.now()+min*60000}); saveTimers(); buildList(); }
+function act(id,a){
+  const t=timers.find(x=>x.id==id); if(!t) return;
+  if(a==='stop') timers=timers.filter(x=>x!==t);
+  else if(a==='pause'){ t.remaining=left(t); t.running=false; }
+  else if(a==='play'){ t.endAt=Date.now()+t.remaining; t.running=true; }
+  saveTimers(); buildList();
+}
+function buildList(){
+  const box=$('#tlist');
+  if(!timers.length){ box.innerHTML='<div class="empty">Aucun minuteur.<br>Choisis une durée à droite.</div>'; return; }
+  box.innerHTML=timers.map(t=>{
+    const ring=isRing(t), cls=ring?'ring':(t.running?'run':'');
+    const btns = ring ? '<button class="btn" data-a="stop" data-id="'+t.id+'">Stop</button>'
+      : (t.running ? '<button class="btn" data-a="pause" data-id="'+t.id+'">Pause</button>' : '<button class="btn solid" data-a="play" data-id="'+t.id+'">Lancer</button>')+'<button class="btn" data-a="stop" data-id="'+t.id+'">Stop</button>';
+    return '<div class="tcard '+cls+'"><div><div class="tname">'+t.label+(ring?' · terminé !':'')+'</div><div class="tdig" data-dig="'+t.id+'">'+(ring?'00:00':fmt(left(t)))+'</div></div><div class="tact">'+btns+'</div></div>';
+  }).join('');
+}
+$('#tlist').addEventListener('click', e=>{ const b=e.target.closest('[data-a]'); if(b) act(b.dataset.id,b.dataset.a); });
+
+$('#presets').innerHTML=PRESETS.map(m=>'<button class="preset" data-min="'+m+'">'+m+' <small>min</small></button>').join('');
+$('#presets').addEventListener('click', e=>{ const b=e.target.closest('[data-min]'); if(b) addTimer(+b.dataset.min); });
+let cmin=12;
+$('#otherBtn').onclick=()=>{ $('#custom').classList.toggle('open'); $('#goBtn').classList.toggle('open'); };
+$('#custom').addEventListener('click', e=>{ const b=e.target.closest('[data-step]'); if(!b) return; cmin=Math.min(180,Math.max(1,cmin+(+b.dataset.step))); $('#cval').textContent=cmin; });
+$('#goBtn').onclick=()=>addTimer(cmin);
+
+/* ---- boucle principale ---- */
+let lastRing=false, lastSig='';
+function tick(){
+  clockTick();
+  let ringing=false, running=0, next=Infinity;
+  timers.forEach(t=>{ if(isRing(t)) ringing=true; else if(t.running){ running++; next=Math.min(next,left(t)); } });
+  const sig=timers.map(t=>t.id+(isRing(t)?'r':t.running?'p':'x')).join(',');
+  if(sig!==lastSig){ lastSig=sig; buildList(); }
+  timers.forEach(t=>{ if(!isRing(t)){ const el=document.querySelector('[data-dig="'+t.id+'"]'); if(el) el.textContent=fmt(left(t)); } });
+  const chip=$('#homeChip');
+  if(ringing){ chip.style.display='block'; chip.textContent='Terminé !'; $('#sleep').classList.remove('on'); }
+  else if(running){ chip.style.display='block'; chip.textContent=running+' en cours · '+fmt(next); }
+  else chip.style.display='none';
+  lastRing=ringing;
+}
+setInterval(tick,250);
+setInterval(()=>{ if(lastRing) beep(); },1400);
+
+/* ---- veille ---- */
+$('#sleepBtn').onclick=()=>$('#sleep').classList.add('on');
+$('#sleep').onclick=()=>$('#sleep').classList.remove('on');
+
+loadTimers(); buildList(); tick();
+</script>
+</body>
+</html>
