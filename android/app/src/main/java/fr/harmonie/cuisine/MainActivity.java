@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -72,10 +74,10 @@ public class MainActivity extends Activity {
         bar.addView(makePill("‹  Retour", new View.OnClickListener() {
             @Override public void onClick(View v) { goBack(); }
         }));
-        bar.addView(makePill("Accueil", new View.OnClickListener() {
+        bar.addView(makePill("Accueil", R.drawable.ic_home, new View.OnClickListener() {
             @Override public void onClick(View v) { showExt(false); }
         }));
-        bar.addView(makePill("Recharger", new View.OnClickListener() {
+        bar.addView(makePill("Recharger", R.drawable.ic_refresh, new View.OnClickListener() {
             @Override public void onClick(View v) { ext.reload(); }
         }));
         View spacer = new View(this);
@@ -165,25 +167,28 @@ public class MainActivity extends Activity {
         return wv;
     }
 
-    /** Bouton blanc arrondi, comme le bouton "Accueil" de la page. */
-    private Button makePill(String label, View.OnClickListener l) {
+    /** Bouton blanc arrondi avec icône, comme le bouton "Accueil" de la page. */
+    private Button makePill(String label, int iconRes, View.OnClickListener l) {
         Button b = new Button(this);
         b.setText(label);
         b.setTextSize(26);
         b.setAllCaps(false);
         b.setTextColor(INK);
-        b.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        b.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         b.setMinWidth(0);
         b.setMinimumWidth(0);
         b.setMinHeight(0);
         b.setMinimumHeight(0);
-        b.setPadding(dp(32), 0, dp(32), 0);
+        b.setCompoundDrawablesRelativeWithIntrinsicBounds(iconRes, 0, 0, 0);
+        b.setCompoundDrawablePadding(dp(10));
+        b.setPadding(dp(24), 0, dp(34), 0);
         b.setStateListAnimator(null);
         b.setElevation(0);
+        b.setBackgroundTintList(null);
 
         StateListDrawable bg = new StateListDrawable();
-        bg.addState(new int[]{android.R.attr.state_pressed}, pillShape(0xFFDDE3DC));
-        bg.addState(new int[]{}, pillShape(Color.WHITE));
+        bg.addState(new int[]{android.R.attr.state_pressed}, pillBg(0xFFE3E8E2));
+        bg.addState(new int[]{}, pillBg(Color.WHITE));
         b.setBackground(bg);
         b.setOnClickListener(l);
 
@@ -192,6 +197,13 @@ public class MainActivity extends Activity {
         p.setMargins(0, 0, dp(16), 0);
         b.setLayoutParams(p);
         return b;
+    }
+
+    /** Pastille + ombre fine de 2 px dessous, comme sur la page. */
+    private Drawable pillBg(int color) {
+        LayerDrawable ld = new LayerDrawable(new Drawable[]{pillShape(0x14000000), pillShape(color)});
+        ld.setLayerInset(1, 0, 0, 0, dp(2));
+        return ld;
     }
 
     private GradientDrawable pillShape(int color) {
