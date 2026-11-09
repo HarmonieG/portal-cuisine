@@ -80,9 +80,14 @@ h1,.big{font-family:'Space Grotesk',Inter,sans-serif}
   <section class="view active" id="v-home">
     <div class="head">
       <div><div class="clock" id="clk">--:--</div><div class="date" id="dt"></div></div>
+      <div style="display:flex;gap:16px">
+      <button class="round" id="fsBtn" aria-label="Plein écran">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16201B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
       <button class="round" id="sleepBtn" aria-label="Mettre l'écran en veille">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16201B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
+      </div>
     </div>
     <div class="grid">
       <button class="tile t-red" data-go="recipes">
@@ -199,6 +204,8 @@ function clockTick(){
 /* ---- audio + écran allumé (déverrouillés au premier toucher) ---- */
 let actx=null, wake=null;
 async function lockWake(){ try{ if('wakeLock' in navigator && !wake){ wake=await navigator.wakeLock.request('screen'); wake.addEventListener('release',()=>wake=null);} }catch(e){} }
+function fsToggle(){ const d=document, el=d.documentElement; const on=d.fullscreenElement||d.webkitFullscreenElement;
+  try{ if(on){ (d.exitFullscreen||d.webkitExitFullscreen).call(d); } else { (el.requestFullscreen||el.webkitRequestFullscreen).call(el); } }catch(e){} }
 let fsTried=false;
 function goFull(){ if(fsTried) return; fsTried=true; const el=document.documentElement; try{ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }catch(e){} }
 addEventListener('pointerdown', ()=>{ goFull(); try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} lockWake(); }, {passive:true});
@@ -262,6 +269,7 @@ setInterval(tick,250);
 setInterval(()=>{ if(lastRing) beep(); },1400);
 
 /* ---- veille ---- */
+$('#fsBtn').onclick=fsToggle;
 $('#sleepBtn').onclick=()=>$('#sleep').classList.add('on');
 $('#sleep').onclick=()=>$('#sleep').classList.remove('on');
 
